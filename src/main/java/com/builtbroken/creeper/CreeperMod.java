@@ -1,7 +1,8 @@
 package com.builtbroken.creeper;
 
 import com.builtbroken.creeper.config.ConfigSpawn;
-import com.builtbroken.creeper.entity.EntityWNCreeper;
+import com.builtbroken.creeper.entity.EnumCreeperType;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.EntityCreeper;
 import net.minecraft.util.ResourceLocation;
@@ -44,55 +45,78 @@ public class CreeperMod
 
     protected static Logger logger = LogManager.getLogger(DOMAIN);
 
+    private static int nextEntityNetworkID = 0;
+
+    private static int getNextEntityNetworkID()
+    {
+        return nextEntityNetworkID++;
+    }
+
     @SubscribeEvent
     public static void registerEntity(RegistryEvent.Register<EntityEntry> event)
     {
-        EntityEntryBuilder builder = EntityEntryBuilder.create();
-        builder.name(PREFIX + "creeper");
-        builder.id(new ResourceLocation(DOMAIN, "creeper"), 0);
-        builder.tracker(128, 1, true);
-        builder.entity(EntityWNCreeper.class);
-        builder.egg(Color.CYAN.getRGB(), Color.PINK.getRGB());
+        //Collect biomes to spawn entities inside
+        List<Biome> biomesList = get(ConfigSpawn.ADDITIONAL_BIOMES);
+        List<Biome> removeList = get(ConfigSpawn.REMOVE_BIOMES);
 
-        //Enable spawns if config is enabled
-        if (ConfigSpawn.SHOULD_SPAWN)
+        //Find biomes that are already supported by the vanilla creeper
+        for (Biome biome : Biome.MUTATION_TO_BASE_ID_MAP)
         {
-            List<Biome> biomesList = get(ConfigSpawn.ADDITIONAL_BIOMES);
-            List<Biome> removeList = get(ConfigSpawn.REMOVE_BIOMES);
-
-            //Find biomes that are already supported by the vanilla creeper
-            for (Biome biome : Biome.MUTATION_TO_BASE_ID_MAP)
+            if (biome != null && !removeList.contains(biome) && !biomesList.contains(biome))
             {
-                if (biome != null && !removeList.contains(biome) && !biomesList.contains(biome))
+                List<Biome.SpawnListEntry> creatures = biome.getSpawnableList(EnumCreatureType.MONSTER);
+                if (creatures != null)
                 {
-                    List<Biome.SpawnListEntry> creatures = biome.getSpawnableList(EnumCreatureType.MONSTER);
-                    if (creatures != null)
+                    for (Biome.SpawnListEntry spawn : creatures)
                     {
-                        for (Biome.SpawnListEntry spawn : creatures)
+                        if (spawn.entityClass == EntityCreeper.class)
                         {
-                            if (spawn.entityClass == EntityCreeper.class)
-                            {
-                                biomesList.add(biome);
-                                break;
-                            }
+                            biomesList.add(biome);
+                            break;
                         }
                     }
                 }
             }
-
-            //Convert to array
-            Biome[] biomes = new Biome[biomesList.size()];
-            for (int i = 0; i < biomesList.size(); i++)
-            {
-                biomes[i] = biomesList.get(i);
-            }
-
-            //Add spawn data
-            builder.spawn(EnumCreatureType.MONSTER, ConfigSpawn.SPAWN_WEIGHT, ConfigSpawn.SPAWN_MIN, ConfigSpawn.SPAWN_MAX, biomes);
         }
 
-        //Register entity
-        event.getRegistry().register(builder.build());
+        //Convert to array
+        Biome[] biomes = new Biome[biomesList.size()];
+        for (int i = 0; i < biomesList.size(); i++)
+        {
+            biomes[i] = biomesList.get(i);
+        }
+
+        //Build entity data
+        for(EnumCreeperType type : EnumCreeperType.values())
+        {
+            EntityEntryBuilder builder = buildEntity(type);
+
+            //Enable spawns if config is enabled
+            if (ConfigSpawn.SHOULD_SPAWN)
+            {
+                builder.spawn(EnumCreatureType.MONSTER, ConfigSpawn.SPAWN_WEIGHT, ConfigSpawn.SPAWN_MIN, ConfigSpawn.SPAWN_MAX, biomes);
+            }
+
+            //Register entity
+            event.getRegistry().register(builder.build());
+        }
+    }
+
+    public static EntityEntryBuilder buildEntity(EnumCreeperType type)
+    {
+        EntityEntryBuilder builder = buildEntity(type.clazz, type.id);
+        builder.egg(Color.CYAN.getRGB(), Color.PINK.getRGB()); //TODO pull from enum
+        return builder;
+    }
+
+    public static EntityEntryBuilder buildEntity(Class<? extends Entity> clazz, String id)
+    {
+        EntityEntryBuilder builder = EntityEntryBuilder.create();
+        builder.name(PREFIX + id);
+        builder.id(new ResourceLocation(DOMAIN, id), getNextEntityNetworkID());
+        builder.tracker(128, 1, true);
+        builder.entity(clazz);
+        return builder;
     }
 
     private static List<Biome> get(String[] array)

@@ -3,6 +3,7 @@ package com.builtbroken.creeper.entity;
 import com.builtbroken.creeper.entity.ai.EntityAICreeperSwell;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAreaEffectCloud;
+import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.*;
 import net.minecraft.entity.effect.EntityLightningBolt;
@@ -24,18 +25,20 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 
 /**
  * @see <a href="https://github.com/BuiltBrokenModding/VoltzEngine/blob/development/license.md">License</a> for what you can and can't do with the code.
  * Created by Dark(DarkGuardsman, Robert) on 4/14/2018.
  */
-public class EntityWNCreeper extends EntityMob
+public abstract class EntityWNCreeper extends EntityMob
 {
     //NBT keys
     public static final String NBT_EFFECT_SCALE = "effectScale";
@@ -59,9 +62,12 @@ public class EntityWNCreeper extends EntityMob
     private float effectScale = 3;
     private int droppedSkulls;
 
-    public EntityWNCreeper(World worldIn)
+    public final EnumCreeperType type;
+
+    public EntityWNCreeper(World worldIn, EnumCreeperType type)
     {
         super(worldIn);
+        this.type = type;
         this.setSize(0.6F, 1.7F);
     }
 
@@ -89,14 +95,14 @@ public class EntityWNCreeper extends EntityMob
     @Override
     public int getMaxFallHeight()
     {
-        return this.getAttackTarget() == null ? 3 : 3 + (int)(this.getHealth() - 1.0F);
+        return this.getAttackTarget() == null ? 3 : 3 + (int) (this.getHealth() - 1.0F);
     }
 
     @Override
     public void fall(float distance, float damageMultiplier)
     {
         super.fall(distance, damageMultiplier);
-        this.timeSinceIgnited = (int)((float)this.timeSinceIgnited + distance * 1.5F);
+        this.timeSinceIgnited = (int) ((float) this.timeSinceIgnited + distance * 1.5F);
 
         if (this.timeSinceIgnited > this.fuseTime - 5)
         {
@@ -111,6 +117,16 @@ public class EntityWNCreeper extends EntityMob
         this.dataManager.register(STATE, Integer.valueOf(-1));
         this.dataManager.register(POWERED, Boolean.valueOf(false));
         this.dataManager.register(IGNITED, Boolean.valueOf(false));
+    }
+
+    @Override
+    public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable IEntityLivingData livingdata)
+    {
+        livingdata = super.onInitialSpawn(difficulty, livingdata);
+
+        //TODO randomize some properties
+
+        return livingdata;
     }
 
     @Override
@@ -177,10 +193,10 @@ public class EntityWNCreeper extends EntityMob
             }
             else if (cause.getTrueSource() instanceof EntityCreeper
                     && cause.getTrueSource() != this
-                    && ((EntityCreeper)cause.getTrueSource()).getPowered()
-                    && ((EntityCreeper)cause.getTrueSource()).ableToCauseSkullDrop())
+                    && ((EntityCreeper) cause.getTrueSource()).getPowered()
+                    && ((EntityCreeper) cause.getTrueSource()).ableToCauseSkullDrop())
             {
-                ((EntityCreeper)cause.getTrueSource()).incrementDroppedSkulls();
+                ((EntityCreeper) cause.getTrueSource()).incrementDroppedSkulls();
                 this.entityDropItem(new ItemStack(Items.SKULL, 1, 4), 0.0F);
             }
         }
@@ -197,7 +213,7 @@ public class EntityWNCreeper extends EntityMob
      */
     public boolean getPowered()
     {
-        return ((Boolean)this.dataManager.get(POWERED)).booleanValue();
+        return ((Boolean) this.dataManager.get(POWERED)).booleanValue();
     }
 
     /**
@@ -206,29 +222,13 @@ public class EntityWNCreeper extends EntityMob
     @SideOnly(Side.CLIENT)
     public float getCreeperFlashIntensity(float p_70831_1_)
     {
-        return ((float)this.lastActiveTime + (float)(this.timeSinceIgnited - this.lastActiveTime) * p_70831_1_) / (float)(this.fuseTime - 2);
+        return ((float) this.lastActiveTime + (float) (this.timeSinceIgnited - this.lastActiveTime) * p_70831_1_) / (float) (this.fuseTime - 2);
     }
 
     @Override
     protected ResourceLocation getLootTable()
     {
         return LootTableList.ENTITIES_CREEPER;
-    }
-
-    /**
-     * Returns the current state of creeper, -1 is idle, 1 is 'in fuse'
-     */
-    public int getCreeperState()
-    {
-        return ((Integer)this.dataManager.get(STATE)).intValue();
-    }
-
-    /**
-     * Sets the state of creeper, -1 to idle and 1 to be 'in fuse'
-     */
-    public void setCreeperState(int state)
-    {
-        this.dataManager.set(STATE, Integer.valueOf(state));
     }
 
     @Override
@@ -269,7 +269,7 @@ public class EntityWNCreeper extends EntityMob
             boolean shouldBreakBlocks = this.world.getGameRules().getBoolean("mobGriefing");
             float power = this.getPowered() ? 2.0F : 1.0F;
             this.dead = true;
-            this.world.createExplosion(this, this.posX, this.posY, this.posZ, (float)this.effectScale * power, shouldBreakBlocks);
+            this.world.createExplosion(this, this.posX, this.posY, this.posZ, (float) this.effectScale * power, shouldBreakBlocks);
             this.setDead();
             this.spawnLingeringCloud();
         }
@@ -286,7 +286,7 @@ public class EntityWNCreeper extends EntityMob
             entityareaeffectcloud.setRadiusOnUse(-0.5F);
             entityareaeffectcloud.setWaitTime(10);
             entityareaeffectcloud.setDuration(entityareaeffectcloud.getDuration() / 2);
-            entityareaeffectcloud.setRadiusPerTick(-entityareaeffectcloud.getRadius() / (float)entityareaeffectcloud.getDuration());
+            entityareaeffectcloud.setRadiusPerTick(-entityareaeffectcloud.getRadius() / (float) entityareaeffectcloud.getDuration());
 
             for (PotionEffect potioneffect : collection)
             {
@@ -299,7 +299,7 @@ public class EntityWNCreeper extends EntityMob
 
     public boolean hasIgnited()
     {
-        return ((Boolean)this.dataManager.get(IGNITED)).booleanValue();
+        return ((Boolean) this.dataManager.get(IGNITED)).booleanValue();
     }
 
     public void ignite()
@@ -308,8 +308,25 @@ public class EntityWNCreeper extends EntityMob
     }
 
     /**
+     * Returns the current state of creeper, -1 is idle, 1 is 'in fuse'
+     */
+    public int getCreeperState()
+    {
+        return ((Integer) this.dataManager.get(STATE)).intValue();
+    }
+
+    /**
+     * Sets the state of creeper, -1 to idle and 1 to be 'in fuse'
+     */
+    public void setCreeperState(int state)
+    {
+        this.dataManager.set(STATE, Integer.valueOf(state));
+    }
+
+
+    /**
      * Returns true if an entity is able to drop its skull due to being blown up by this creeper.
-     *
+     * <p>
      * Does not test if this creeper is charged; the caller must do that. However, does test the doMobLoot gamerule.
      */
     public boolean ableToCauseSkullDrop()
@@ -327,12 +344,12 @@ public class EntityWNCreeper extends EntityMob
     {
         super.writeEntityToNBT(compound);
 
-        if (((Boolean)this.dataManager.get(POWERED)).booleanValue())
+        if (((Boolean) this.dataManager.get(POWERED)).booleanValue())
         {
             compound.setBoolean(NBT_POWERED, true);
         }
 
-        compound.setShort(NBT_FUSE, (short)this.fuseTime);
+        compound.setShort(NBT_FUSE, (short) this.fuseTime);
         compound.setFloat(NBT_EFFECT_SCALE, this.effectScale);
         compound.setBoolean(NBT_IGNITE, this.hasIgnited());
     }
