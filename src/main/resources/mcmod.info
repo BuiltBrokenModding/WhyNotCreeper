@@ -1,0 +1,16 @@
+[
+{
+  "modid": "whynotcreeper",
+  "name": "Why Not Creeper",
+  "description": "Mod that introduces more creeper types",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "http://www.builtbroken.com",
+  "updateUrl": "",
+  "authorList": ["DarkGuardsman"],
+  "credits": "Dmodoomsirius",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
