@@ -1,7 +1,9 @@
 package com.builtbroken.creeper.content.entity.render;
 
 import com.builtbroken.creeper.content.entity.EntityWNCreeper;
-import com.builtbroken.creeper.content.entity.EnumCreeperType;
+import com.builtbroken.creeper.content.item.ItemHeadDeco;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelCreeper;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -10,9 +12,15 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
@@ -29,10 +37,15 @@ import java.awt.*;
 @Mod.EventBusSubscriber
 public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
 {
+    private EntityItem entityItem;
+    private RenderEntityItem2 renderEntityItem;
+
     public RenderWNCreeper(RenderManager renderManagerIn)
     {
         super(renderManagerIn, new ModelCreeper(), 0.5F);
         this.addLayer(new LayerWNCreeperCharge(this));
+        entityItem = new EntityItem(null);
+        renderEntityItem = new RenderEntityItem2(renderManager, Minecraft.getMinecraft().getRenderItem());
     }
 
     @Override
@@ -56,48 +69,117 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
         //entity.rotationPitch = entity.prevRotationPitch = 0;
         super.doRender(entity, x, y, z, entityYaw, partialTicks);
 
-        float itemRenderScale = 0.2f;
 
-        if (entity.type == EnumCreeperType.PINK)
+        ItemStack stack = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+        stack = new ItemStack(Blocks.FURNACE);
+        if (!stack.isEmpty())
         {
-            BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-            GlStateManager.enableRescaleNormal();
-            GlStateManager.pushMatrix();
-
-            float head_pitch = (float) Math.toRadians(entity.rotationPitch);
-            float head_yaw = (float) Math.toRadians(entity.rotationYawHead);
-
-            //Move to rotation point
-            GlStateManager.translate(x, y + 1.13, z);
-
-            //Rotate
-            GlStateManager.rotate(180 - head_yaw * (180F / (float) Math.PI), 0.0F, 1.0F, 0.0F);
-            GlStateManager.rotate(-entity.rotationPitch, 1.0F, 0.0F, 0.0F);
-
-            //Move object to center
-            GlStateManager.translate(-0.5 * itemRenderScale, 0, 0.5 * itemRenderScale - 0.5 * itemRenderScale);
-
-            //Move object to render position
-            GlStateManager.translate(-0.25, 0.4, -0.25);
-
-            //double rx = Math.sin(head_yaw);
-            //double rz = Math.cos(head_yaw);
-
-            //GlStateManager.translate(rx * 0.1, 0, rz * 0.1);
-
-
-            GlStateManager.scale( itemRenderScale,  itemRenderScale,  itemRenderScale);
-            int i = entity.getBrightnessForRender();
-            int j = i % 65536;
-            int k = i / 65536;
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) j, (float) k);
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-            blockrendererdispatcher.renderBlockBrightness(Blocks.DISPENSER.getDefaultState(), 1.0F);
-            GlStateManager.popMatrix();
-            GlStateManager.disableRescaleNormal();
+            if (stack.getItem() instanceof ItemBlock)
+            {
+                renderBlockOnHead(entity, stack, x, y, z, entityYaw, partialTicks);
+            }
+            else if (stack.getItem() instanceof ItemHeadDeco)
+            {
+                renderDecoItem(entity, stack, x, y, z, entityYaw, partialTicks);
+            }
+            else
+            {
+                renderDecoItem(entity, stack, x, y, z, entityYaw, partialTicks);
+            }
         }
     }
+
+    protected void renderBlockOnHead(EntityWNCreeper entity, ItemStack stack, double x, double y, double z, float entityYaw, float partialTicks)
+    {
+        Block block = Block.getBlockFromItem(stack.getItem());
+        if (block != null)
+        {
+            IBlockState blockState = block.getDefaultState();
+
+            if (block.getRenderType(blockState) == EnumBlockRenderType.MODEL)
+            {
+                float itemRenderScale = 0.4f;
+
+                float yaw = 180 - this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
+                float pitch = -this.interpolateRotation(entity.prevRotationPitch, entity.rotationPitch, partialTicks);
+
+                BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+                GlStateManager.enableRescaleNormal();
+                GlStateManager.pushMatrix();
+
+                //Move to rotation point
+                GlStateManager.translate(x, y + 1.13, z);
+
+                //Rotate
+                GlStateManager.rotate(yaw, 0.0F, 1.0F, 0.0F);
+                GlStateManager.rotate(pitch, 1.0F, 0.0F, 0.0F);
+                GlStateManager.rotate(-90, 0.0F, 1.0F, 0.0F);
+
+                //Move object to center
+                GlStateManager.translate(-0.5 * itemRenderScale, 0, 0.5 * itemRenderScale);
+
+                //Move object to render position
+                GlStateManager.translate(0, 0.48, 0);
+
+
+                GlStateManager.scale(itemRenderScale, itemRenderScale, itemRenderScale);
+                int i = entity.getBrightnessForRender();
+                int j = i % 65536;
+                int k = i / 65536;
+                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) j, (float) k);
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+                blockrendererdispatcher.renderBlockBrightness(blockState, 1.0F);
+                GlStateManager.popMatrix();
+                GlStateManager.disableRescaleNormal();
+            }
+        }
+    }
+
+    protected void renderDecoItem(EntityWNCreeper entity, ItemStack stack, double x, double y, double z, float entityYaw, float partialTicks)
+    {
+        float itemRenderScale = 0.5f;
+
+        float yaw = 180 - this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
+        float pitch = -this.interpolateRotation(entity.prevRotationPitch, entity.rotationPitch, partialTicks);
+
+        //GlStateManager.enableRescaleNormal();
+        GlStateManager.pushMatrix();
+
+        //Move to rotation point
+        GlStateManager.translate(x, y + 1.13, z);
+
+        //Rotate
+        GlStateManager.rotate(yaw, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(pitch, 1.0F, 0.0F, 0.0F);
+
+        //Move object to center
+        GlStateManager.translate(-0.5 * itemRenderScale, 0, 0.5 * itemRenderScale - 0.5 * itemRenderScale);
+
+        //Move object to render position
+        GlStateManager.translate(-0.25, 0.4, -0.25);
+
+        GlStateManager.scale(itemRenderScale, itemRenderScale, itemRenderScale);
+        renderItem(stack, entity.world, entity.posX, entity.posY, entity.posZ, 0, 0, 0, entityYaw, partialTicks);
+
+        GlStateManager.popMatrix();
+        //GlStateManager.disableRescaleNormal();
+    }
+
+
+    public void renderItem(ItemStack stack, World world, double wx, double wy, double wz,
+                           double x, double y, double z, float entityYaw, float partialTicks)
+    {
+        //Set data for fake entity
+        entityItem.setWorld(world);
+        entityItem.rotationYaw = 0;
+        entityItem.setPosition(wx, wy, wz);
+        entityItem.setItem(stack);
+
+        //render entity item
+        renderEntityItem.doRender(entityItem, x, y, z, entityYaw, partialTicks);
+    }
+
 
     @Override
     protected void renderModel(EntityWNCreeper entitylivingbaseIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor)
