@@ -11,9 +11,13 @@ import net.minecraft.item.Item;
  */
 public class ItemHeadDeco extends Item
 {
-    public ItemHeadDeco(String name)
+    public final EnumDecoItems type;
+
+    public ItemHeadDeco(EnumDecoItems type)
     {
-        this.setRegistryName(CreeperMod.DOMAIN, "head.deco." + name);
+        this.type = type;
+        this.setRegistryName(CreeperMod.DOMAIN, "head.deco." + type.name);
+        this.setUnlocalizedName(CreeperMod.PREFIX + "head.deco." + type.name);
     }
 
     //TODO maybe change entity type based on right clicking with item?

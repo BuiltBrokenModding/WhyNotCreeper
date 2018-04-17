@@ -1,6 +1,7 @@
 package com.builtbroken.creeper.content.entity.render;
 
 import com.builtbroken.creeper.content.entity.EntityWNCreeper;
+import com.builtbroken.creeper.content.item.EnumDecoItems;
 import com.builtbroken.creeper.content.item.ItemHeadDeco;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -13,7 +14,6 @@ import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.init.Blocks;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -21,12 +21,6 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-
-import java.awt.*;
 
 /**
  * Copy of {@link net.minecraft.client.renderer.entity.RenderCreeper} to change entity and allow customization
@@ -34,7 +28,6 @@ import java.awt.*;
  * @see <a href="https://github.com/BuiltBrokenModding/VoltzEngine/blob/development/license.md">License</a> for what you can and can't do with the code.
  * Created by Dark(DarkGuardsman, Robert) on 4/14/2018.
  */
-@Mod.EventBusSubscriber
 public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
 {
     private EntityItem entityItem;
@@ -71,7 +64,7 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
 
 
         ItemStack stack = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
-        stack = new ItemStack(Blocks.FURNACE);
+        stack = new ItemStack(EnumDecoItems.BOW_TIE_0.item);
         if (!stack.isEmpty())
         {
             if (stack.getItem() instanceof ItemBlock)
@@ -84,7 +77,7 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
             }
             else
             {
-                renderDecoItem(entity, stack, x, y, z, entityYaw, partialTicks);
+                renderItemOnHead(entity, stack, x, y, z, entityYaw, partialTicks);
             }
         }
     }
@@ -137,6 +130,52 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
     }
 
     protected void renderDecoItem(EntityWNCreeper entity, ItemStack stack, double x, double y, double z, float entityYaw, float partialTicks)
+    {
+        //Get data
+        final ItemHeadDeco itemHeadDeco = (ItemHeadDeco) stack.getItem();
+        final EnumDecoItems itemType = itemHeadDeco.type;
+        final float itemRenderScale = itemType.render_scale;
+
+        //Interpolate rotation for smooth animation
+        float yaw = 180 - this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
+        float pitch = -this.interpolateRotation(entity.prevRotationPitch, entity.rotationPitch, partialTicks);
+
+        GlStateManager.pushMatrix();
+
+        //Move to rotation point
+        GlStateManager.translate(x, y + 1.13, z);
+
+        //Rotate to match head
+        GlStateManager.rotate(yaw, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(pitch, 1.0F, 0.0F, 0.0F);
+
+        //Move object to render position (items rotate around center so doesn't need to be centered like blocks)
+        GlStateManager.translate(itemType.render_x, itemType.render_y, itemType.render_z);
+
+        //Apply rotation
+        if (itemType.render_yaw != 0)
+        {
+            GlStateManager.rotate(itemType.render_yaw, 0.0F, 1.0F, 0.0F);
+        }
+        if (itemType.render_pitch != 0)
+        {
+            GlStateManager.rotate(itemType.render_pitch, 1.0F, 0.0F, 0.0F);
+        }
+        if (itemType.render_roll != 0)
+        {
+            GlStateManager.rotate(itemType.render_roll, 0.0F, 0.0F, 1.0F);
+        }
+
+        //Apply scale
+        GlStateManager.scale(itemRenderScale, itemRenderScale, itemRenderScale);
+
+        //Render item
+        renderItem(stack, entity.world, entity.posX, entity.posY, entity.posZ, 0, 0, 0, entityYaw, partialTicks);
+
+        GlStateManager.popMatrix();
+    }
+
+    protected void renderItemOnHead(EntityWNCreeper entity, ItemStack stack, double x, double y, double z, float entityYaw, float partialTicks)
     {
         float itemRenderScale = 0.5f;
 
@@ -199,9 +238,9 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
                 GlStateManager.enableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);
             }
 
-            GlStateManager.color(Color.PINK.getRed() / 255f, Color.PINK.getGreen() / 255f, Color.PINK.getBlue() / 255f);
+            //GlStateManager.color(Color.PINK.getRed() / 255f, Color.PINK.getGreen() / 255f, Color.PINK.getBlue() / 255f);
             this.mainModel.render(entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor);
-            GlStateManager.color(1, 1, 1, 1);
+            //GlStateManager.color(1, 1, 1, 1);
 
             if (flag1)
             {
@@ -233,11 +272,5 @@ public class RenderWNCreeper extends RenderLiving<EntityWNCreeper>
     protected ResourceLocation getEntityTexture(EntityWNCreeper entity)
     {
         return entity.type.TEXTURE;
-    }
-
-    @SubscribeEvent
-    public static void registerModel(ModelRegistryEvent event)
-    {
-        RenderingRegistry.registerEntityRenderingHandler(EntityWNCreeper.class, manager -> new RenderWNCreeper(manager));
     }
 }

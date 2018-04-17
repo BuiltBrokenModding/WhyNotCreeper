@@ -2,9 +2,12 @@ package com.builtbroken.creeper;
 
 import com.builtbroken.creeper.config.ConfigSpawn;
 import com.builtbroken.creeper.content.entity.EnumCreeperType;
+import com.builtbroken.creeper.content.item.EnumDecoItems;
+import com.builtbroken.creeper.content.item.ItemHeadDeco;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.EntityCreeper;
+import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
@@ -53,6 +56,15 @@ public class CreeperMod
     }
 
     @SubscribeEvent
+    public static void registerItem(RegistryEvent.Register<Item> event)
+    {
+        for (EnumDecoItems decoItem : EnumDecoItems.values())
+        {
+            event.getRegistry().register(decoItem.item = new ItemHeadDeco(decoItem));
+        }
+    }
+
+    @SubscribeEvent
     public static void registerEntity(RegistryEvent.Register<EntityEntry> event)
     {
         //Collect biomes to spawn entities inside
@@ -87,7 +99,7 @@ public class CreeperMod
         }
 
         //Build entity data
-        for(EnumCreeperType type : EnumCreeperType.values())
+        for (EnumCreeperType type : EnumCreeperType.values())
         {
             EntityEntryBuilder builder = buildEntity(type);
 
