@@ -1,7 +1,7 @@
-package com.builtbroken.creeper.entity.render;
+package com.builtbroken.creeper.content.entity.render;
 
-import com.builtbroken.creeper.entity.EntityWNCreeper;
-import com.builtbroken.creeper.entity.EnumCreeperType;
+import com.builtbroken.creeper.content.entity.EntityWNCreeper;
+import com.builtbroken.creeper.content.entity.EnumCreeperType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelCreeper;
 import net.minecraft.client.renderer.BlockRendererDispatcher;

@@ -1,6 +1,6 @@
-package com.builtbroken.creeper.entity.ai;
+package com.builtbroken.creeper.content.entity.ai;
 
-import com.builtbroken.creeper.entity.EntityWNCreeper;
+import com.builtbroken.creeper.content.entity.EntityWNCreeper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
 

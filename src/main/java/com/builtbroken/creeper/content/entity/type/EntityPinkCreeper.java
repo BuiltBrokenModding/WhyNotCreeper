@@ -1,7 +1,7 @@
-package com.builtbroken.creeper.entity.type;
+package com.builtbroken.creeper.content.entity.type;
 
-import com.builtbroken.creeper.entity.EntityWNCreeper;
-import com.builtbroken.creeper.entity.EnumCreeperType;
+import com.builtbroken.creeper.content.entity.EntityWNCreeper;
+import com.builtbroken.creeper.content.entity.EnumCreeperType;
 import net.minecraft.world.World;
 
 /**

@@ -1,7 +1,7 @@
 package com.builtbroken.creeper;
 
 import com.builtbroken.creeper.config.ConfigSpawn;
-import com.builtbroken.creeper.entity.EnumCreeperType;
+import com.builtbroken.creeper.content.entity.EnumCreeperType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.EntityCreeper;

@@ -1,9 +1,9 @@
-package com.builtbroken.creeper.entity;
+package com.builtbroken.creeper.content.entity;
 
 import com.builtbroken.creeper.CreeperMod;
-import com.builtbroken.creeper.entity.type.EntityColorizedCreeper;
-import com.builtbroken.creeper.entity.type.EntityNormalCreeper;
-import com.builtbroken.creeper.entity.type.EntityPinkCreeper;
+import com.builtbroken.creeper.content.entity.type.EntityColorizedCreeper;
+import com.builtbroken.creeper.content.entity.type.EntityNormalCreeper;
+import com.builtbroken.creeper.content.entity.type.EntityPinkCreeper;
 import net.minecraft.util.ResourceLocation;
 
 /**

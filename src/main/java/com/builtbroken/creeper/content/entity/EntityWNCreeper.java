@@ -1,6 +1,6 @@
-package com.builtbroken.creeper.entity;
+package com.builtbroken.creeper.content.entity;
 
-import com.builtbroken.creeper.entity.ai.EntityAICreeperSwell;
+import com.builtbroken.creeper.content.entity.ai.EntityAICreeperSwell;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAreaEffectCloud;
 import net.minecraft.entity.IEntityLivingData;
